@@ -1,4 +1,4 @@
-# import the necessary packages
+import pickle
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
@@ -10,9 +10,12 @@ import argparse
 import numpy as np
 import cv2
 import os
-import matplotlib.pyplot as plt
 import tkinter as tk
 from tkinter import filedialog
+import redis
+
+# import the necessary packages
+import matplotlib.pyplot as plt
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -24,15 +27,36 @@ ap.add_argument("-j", "--jobs", type=int, default=-1,
     help="# of jobs for k-NN distance (-1 uses all available cores)")
 args = vars(ap.parse_args())
 
-# grab the list of images that we'll be describing
-print("[INFO] loading images...")
-imagePaths = list(paths.list_images(args["dataset"]))
-# initialize the image preprocessor, load the dataset from disk,
-# and reshape the data matrix
-sp = SimplePreprocessor(32, 32)
-sdl = SimpleDatasetLoader(preprocessors=[sp])
-(data, labels) = sdl.load(imagePaths, verbose=500)
-data = data.reshape((data.shape[0], 3072))
+# check if the model exists in Redis
+redis_host = 'localhost'
+redis_port = 6379
+redis_db = 1
+redis_password = 'redis'
+
+r = redis.Redis(host=redis_host, port=redis_port, db=redis_db, password=redis_password)
+# check redis connected 
+print(r.ping())
+if r.exists('data') and r.exists('labels'):
+    # model exists in Redis, load it
+    print("[INFO] Loading model from Redis...")
+    data = r.get('data')
+    data = pickle.loads(data)
+    labels = r.get('labels')
+    labels = pickle.loads(labels)
+else:
+    # model does not exist in Redis, train it
+    # grab the list of images that we'll be describing
+    print("[INFO] loading images...")
+    imagePaths = list(paths.list_images(args["dataset"]))
+    # initialize the image preprocessor, load the dataset from disk,
+    # and reshape the data matrix
+    sp = SimplePreprocessor(32, 32)
+    sdl = SimpleDatasetLoader(preprocessors=[sp])
+    (data, labels) = sdl.load(imagePaths, verbose=500)
+    data = data.reshape((data.shape[0], 3072))
+    r.set('data', pickle.dumps(data))
+    r.set('labels', pickle.dumps(labels))
+    
 # show some information on memory consumption of the images
 print("[INFO] features matrix: {:.1f}MB".format(
     data.nbytes / (1024 * 1024.0)))

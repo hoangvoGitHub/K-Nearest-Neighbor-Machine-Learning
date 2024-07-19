@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+
+    redis:
+        container_name: management-redis
+        image: redis:7-alpine
+        restart: always
+        command: redis-server --save 20 1 --loglevel warning --requirepass $REDIS_PASSWORD
+        ports:
+            - $REDIS_PORT:6379
+        volumes:
+            - .docker/redis:/data
+        env_file:
+            - .env
+        networks:
+            - management-network
