@@ -36,6 +36,7 @@ redis_password = 'redis'
 r = redis.Redis(host=redis_host, port=redis_port, db=redis_db, password=redis_password)
 # check redis connected 
 print(r.ping())
+sp = SimplePreprocessor(32, 32)
 if r.exists('data') and r.exists('labels'):
     # model exists in Redis, load it
     print("[INFO] Loading model from Redis...")
@@ -50,7 +51,7 @@ else:
     imagePaths = list(paths.list_images(args["dataset"]))
     # initialize the image preprocessor, load the dataset from disk,
     # and reshape the data matrix
-    sp = SimplePreprocessor(32, 32)
+    
     sdl = SimpleDatasetLoader(preprocessors=[sp])
     (data, labels) = sdl.load(imagePaths, verbose=500)
     data = data.reshape((data.shape[0], 3072))
