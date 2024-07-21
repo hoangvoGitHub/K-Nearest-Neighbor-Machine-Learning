@@ -1,6 +1,10 @@
 import numpy as np
 import cv2
 import os
+import pickle
+
+from redis import Redis
+
 class SimpleDatasetLoader:
 	def __init__(self, preprocessors=None):
 		# store the image preprocessor
@@ -10,7 +14,7 @@ class SimpleDatasetLoader:
 		if self.preprocessors is None:
 			self.preprocessors = []
 			
-	def	load(self, imagePaths, verbose=-1):
+	def	load(self, imagePaths, verbose=-1, r:Redis=None):
 		# initialize the list of features and labels
 		data = []
 		labels = []
@@ -38,4 +42,5 @@ class SimpleDatasetLoader:
 				print("[INFO] processed {}/{}".format(i + 1,
 					len(imagePaths)))
 		# return a tuple of the data and labels
+		r.set('data', pickle.dumps(data))
 		return (np.array(data), np.array(labels))

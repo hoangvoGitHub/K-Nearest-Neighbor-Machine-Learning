@@ -1,6 +1,5 @@
 version: '3.8'
 services:
-
     redis:
         container_name: management-redis
         image: redis:7-alpine
@@ -12,5 +11,3 @@ services:
             - .docker/redis:/data
         env_file:
             - .env
-        networks:
-            - management-network
