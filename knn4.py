@@ -19,6 +19,7 @@ import requests
 import matplotlib.pyplot as plt
 from io import BytesIO
 from tkinter import simpledialog
+import pandas as pd
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-d", "--dataset", required=True,
@@ -139,6 +140,14 @@ print("max acc at k="+str(bestK+1)+" acc of "+str(acc))
 
 model = KNeighborsClassifier(bestK+1)
 model.fit(X_train, y_train)
+# Generate classification report
+report = classification_report(y_test, model.predict(X_test), target_names=le.classes_, output_dict=True)
+
+# Convert report to dataframe
+df = pd.DataFrame(report).transpose()
+
+# Export dataframe to Excel file
+df.to_excel('classification_report.xlsx', index=True)
 # Function to visualize an image and its prediction
 def visualize_image(original_image, closest_images, label, prediction):
     fig, axs = plt.subplots((len(closest_images) + 1) // 2, 2, figsize=(12, 6))
